@@ -1042,7 +1042,7 @@ public class StringUtil {
                     escapeType = json ? NO_ESC : ESC_BACKSLASH; 
                 } else if (c == '\\') {
                     escapeType = ESC_BACKSLASH; 
-                } else if (c == '/' && (i == 0 || s.charAt(i - 1) == '<')) {  // against closing elements
+                } else if (c == '/' ) {
                     escapeType = ESC_BACKSLASH; 
                 } else if (c == '>') {  // against "]]> and "-->"
                     final boolean dangerous;

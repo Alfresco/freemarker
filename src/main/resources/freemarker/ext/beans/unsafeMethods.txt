@@ -79,3 +79,6 @@ java.lang.System.setOut(java.io.PrintStream)
 java.lang.System.setProperties(java.util.Properties)
 java.lang.System.setProperty(java.lang.String,java.lang.String)
 java.lang.System.setSecurityManager(java.lang.SecurityManager)
+
+java.lang.Module.getClassLoader()
+java.security.ProtectionDomain.getClassLoader()

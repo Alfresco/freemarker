@@ -92,14 +92,14 @@
       <exclude org="xml-apis" module="xml-apis" />
     </dependency>
     <dependency org="dom4j" name="dom4j" rev="1.3" conf="build.base->default" /> <!-- legacy -->
-    <dependency org="org.jdom" name="jdom" rev="1.0-beta8-dev" conf="build.base->default" /> <!-- legacy -->
+    <dependency org="jdom" name="jdom" rev="1.0b8" conf="build.base->default" /> <!-- legacy -->
 
     <dependency org="ant" name="ant" rev="1.6.5" conf="build.base->default">
       <!-- The lowerst supported xml-apis version is an explicit dependency; prevent eviction: -->
       <exclude org="xml-apis" module="xml-apis" />
     </dependency>
     
-    <dependency org="javax.servlet.jsp" name="jsp-api" rev="1.2" conf="build.jsp1.2->default" />
+    <!-- dependency org="javax.servlet.jsp" name="jsp-api" rev="1.2" conf="build.jsp1.2->default" -->
     <dependency org="javax.servlet" name="servlet-api" rev="2.3" conf="build.jsp1.2->default" />
     <dependency org="javax.servlet.jsp" name="jsp-api" rev="2.0" conf="build.jsp2.0->default; example.struts-webapp->default" />
     <dependency org="javax.servlet" name="servlet-api" rev="2.4" conf="build.jsp2.0->default; example.servlet->default" />
@@ -108,7 +108,7 @@
     
     <dependency org="rhino" name="js" rev="1.6R1" conf="build.base->default" />
 
-    <dependency org="org.python" name="jython" rev="2.0.0" conf="build.jython2.0->default" />
+    <dependency org="jython" name="jython" rev="2.1" conf="build.jython2.0->default" />
     <dependency org="org.python" name="jython" rev="2.2.1" conf="build.jython2.2->default" />
     <dependency org="org.python" name="jython" rev="2.5.0" conf="build.jython2.5->default" />
     

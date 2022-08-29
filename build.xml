@@ -80,7 +80,7 @@
   </tstamp>
   <filter token="timestampInVersion" value="${timestampInVersion}" />
   <filter token="timestampNice" value="${timestampNice}" />
-  <mkdir dir="build "/>
+  <mkdir dir="build"/>
   <!-- Copying is needed to substitute the timestamps. -->
   <copy
       file="src/main/resources/freemarker/version.properties"
@@ -412,6 +412,10 @@
         preservelastmodified="true" overwrite="true"
     />
     -->
+
+    <jar destfile="build/freemarker-sources.jar">
+        <fileset dir="src" includes="**/*.*"/>
+    </jar>
   </target>
 
   <!-- ================================================================= -->

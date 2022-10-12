@@ -50,8 +50,8 @@ public class StringUtilTest {
     public void testHtmlChars() {
         assertEsc(
                 "<safe>/>->]> </foo> <!-- --> <![CDATA[ ]]> <?php?>",
-                "<safe>\\/>->]> <\\/foo> \\x3C!-- --\\> \\x3C![CDATA[ ]]\\> \\x3C?php?>",
-                "<safe>\\/>->]> <\\/foo> \\u003C!-- --\\u003E \\u003C![CDATA[ ]]\\u003E \\u003C?php?>");
+                "<safe>/>->]> <\\/foo> \\x3C!-- --\\> \\x3C![CDATA[ ]]\\> \\x3C?php?>",
+                "<safe>/>->]> <\\/foo> \\u003C!-- --\\u003E \\u003C![CDATA[ ]]\\u003E \\u003C?php?>");
         assertEsc("<!c", "\\x3C!c", "\\u003C!c");
         assertEsc("c<!", "c\\x3C!", "c\\u003C!");
         assertEsc("c<", "c\\x3C", "c\\u003C");
@@ -73,7 +73,7 @@ public class StringUtilTest {
         assertEsc("/c", "\\/c", "\\/c");
         assertEsc("</", "<\\/", "<\\/");
         assertEsc("</c", "<\\/c", "<\\/c");
-        assertEsc("c/", "c\\/", "c\\/");
+        assertEsc("c/", "c/", "c/");
     }
 
     @Test
@@ -85,7 +85,11 @@ public class StringUtilTest {
 
     @Test
     public void testSameStringsReturned() {
-        String s = "";
+        String s = "==> I/m <safe>!";
+        assertTrue(s == StringUtil.jsStringEnc(s, false));  // "==" because is must return the same object
+        assertTrue(s == StringUtil.jsStringEnc(s, true));
+
+        s = "";
         assertTrue(s == StringUtil.jsStringEnc(s, false));
         assertTrue(s == StringUtil.jsStringEnc(s, true));
 
@@ -99,7 +103,7 @@ public class StringUtilTest {
     public void testOneOffs() {
         assertEsc("c\"c\"cc\"\"c", "c\\\"c\\\"cc\\\"\\\"c", "c\\\"c\\\"cc\\\"\\\"c");
         assertEsc("\"c\"cc\"", "\\\"c\\\"cc\\\"", "\\\"c\\\"cc\\\"");
-        assertEsc("c/c/cc//c", "c\\/c\\/cc\\/\\/c", "c\\/c\\/cc\\/\\/c");
+        assertEsc("c/c/cc//c", "c/c/cc//c", "c/c/cc//c");
         assertEsc("c<c<cc<<c", "c<c<cc<<c", "c<c<cc<<c");
         assertEsc("/<", "\\/\\x3C", "\\/\\u003C");
         assertEsc(">", "\\>", "\\u003E");

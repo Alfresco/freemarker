@@ -106,7 +106,7 @@ FOOBAR
 [\u0001\u001A ] = [\u0001\u001A ]
 [\n\r\t\f\b\"] = [\n\r\t\f\b\"]
 [\/] = [\/]
-[a\/b] = [a/b]
+[a/b] = [a/b]
 [<\/script>] = [<\/script>]
 [\u003C![CDATA[] = [\u003C![CDATA[]
 []]\u003E] = []]\u003E]

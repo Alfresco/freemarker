@@ -44,7 +44,7 @@ jobs:
           echo "BASE_VERSION=${BASE_VERSION}" >> "$GITHUB_ENV"
           echo "PUBLISH_VERSION=${BASE_VERSION}-alfresco-patched" >> "$GITHUB_ENV"
 
-      # Writes ~/.m2/settings.xml with a <server> entry for NEXUS_SERVER_ID, pulling the
+      # Writes ~/.m2/settings.xml with a <server> entry for nexus-thirdparty, pulling the
       # actual credentials from env vars at runtime (set below from repo/org secrets).
       # This account needs deploy/write permission on the "thirdparty" Nexus repo
       # specifically -- confirm with whoever administers Nexus access if this 403s.
@@ -53,7 +53,7 @@ jobs:
         with:
           java-version: 17
           distribution: temurin
-          server-id: ${{ vars.NEXUS_SERVER_ID }}
+          server-id: nexus-thirdparty
           server-username: NEXUS_USERNAME
           server-password: NEXUS_PASSWORD
 
@@ -64,7 +64,7 @@ jobs:
         run: |
           mvn deploy:deploy-file \
             -Durl="https://nexus.alfresco.com/nexus/service/local/repositories/thirdparty/content" \
-            -DrepositoryId="${{ vars.NEXUS_SERVER_ID }}" \
+            -DrepositoryId="nexus-thirdparty" \
             -Dfile="build/libs/freemarker-${BASE_VERSION}.jar" \
             -DgroupId=org.freemarker \
             -DartifactId=freemarker \

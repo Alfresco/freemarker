@@ -35,42 +35,25 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
 
-      - name: Build jar and sources jar
-        run: './gradlew "-Pfreemarker.signMethod=none" "-Pfreemarker.allowUnsignedReleaseBuild=true" clean jar sourcesJar'
-
-      - name: Compute release version
+      # version.properties' mavenVersion drives project.version, which the "main"
+      # MavenPublication below (build.gradle.kts:337) uses as-is -- so we append the
+      # Alfresco suffix here rather than maintaining a second copy of the version string.
+      - name: Set Alfresco patch version
         run: |
           BASE_VERSION=$(grep '^mavenVersion=' freemarker-core/src/main/resource-templates/freemarker/version.properties | cut -d'=' -f2)
-          echo "BASE_VERSION=${BASE_VERSION}" >> "$GITHUB_ENV"
-          echo "PUBLISH_VERSION=${BASE_VERSION}-alfresco-patched" >> "$GITHUB_ENV"
+          sed -i "s/^mavenVersion=.*/mavenVersion=${BASE_VERSION}-alfresco-patched-2/" freemarker-core/src/main/resource-templates/freemarker/version.properties
 
-      # Writes ~/.m2/settings.xml with a <server> entry for nexus-thirdparty, pulling the
-      # actual credentials from env vars at runtime (set below from repo/org secrets).
-      # This account needs deploy/write permission on the "thirdparty" Nexus repo
-      # specifically -- confirm with whoever administers Nexus access if this 403s.
-      - name: Set up Maven settings.xml for Nexus
-        uses: actions/setup-java@v4
-        with:
-          java-version: 17
-          distribution: temurin
-          server-id: nexus-thirdparty
-          server-username: NEXUS_USERNAME
-          server-password: NEXUS_PASSWORD
-
-      - name: Deploy jar + sources to Nexus
+      # Publishes via Gradle's own "main" MavenPublication (build.gradle.kts:337), which
+      # already carries the real upstream Apache FreeMarker POM metadata (license, url,
+      # scm, etc.) -- no need to hand-author a POM or shell out to Maven for this.
+      - name: Publish jar + sources + pom to Nexus
         env:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
         run: |
-          mvn org.apache.maven.plugins:maven-deploy-plugin:2.8.2:deploy-file \
-            -Durl="https://nexus.alfresco.com/nexus/service/local/repositories/thirdparty" \
-            -DrepositoryId="nexus-thirdparty" \
-            -Dfile="build/libs/freemarker-${BASE_VERSION}.jar" \
-            -DgroupId=org.freemarker \
-            -DartifactId=freemarker \
-            -Dversion="${PUBLISH_VERSION}" \
-            -Dtype=jar \
-            -DgeneratePom=true \
-            -DcreateChecksum=true \
-            -Dsources="build/libs/freemarker-${BASE_VERSION}-sources.jar" \
-            -DgeneratePom.description="Freemarker ${BASE_VERSION} Alfresco Patch"
+          ./gradlew "-Pfreemarker.signMethod=none" "-Pfreemarker.allowUnsignedReleaseBuild=true" \
+            "-PfreemarkerDeployUrl=https://nexus.alfresco.com/nexus/service/local/repositories/thirdparty" \
+            "-PfreemarkerDeployServerId=nexusThirdparty" \
+            "-Pfreemarker.deploy.apache.user=${NEXUS_USERNAME}" \
+            "-Pfreemarker.deploy.apache.password=${NEXUS_PASSWORD}" \
+            publishMainPublicationToNexusThirdpartyRepository

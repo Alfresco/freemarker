@@ -62,7 +62,7 @@ jobs:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
         run: |
-          mvn deploy:deploy-file \
+          mvn org.apache.maven.plugins:maven-deploy-plugin:2.8.2:deploy-file \
             -Durl="https://nexus.alfresco.com/nexus/service/local/repositories/thirdparty/content" \
             -DrepositoryId="nexus-thirdparty" \
             -Dfile="build/libs/freemarker-${BASE_VERSION}.jar" \

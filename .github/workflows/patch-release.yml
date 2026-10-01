@@ -1,0 +1,74 @@
+name: Publish to Nexus
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [ '*-alfresco-patched' ]
+
+jobs:
+  publish:
+    if: contains(github.event.head_commit.message, '[release]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: 8
+          distribution: temurin
+
+      - name: Set up JDK 16
+        uses: actions/setup-java@v4
+        with:
+          java-version: 16
+          distribution: zulu
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: oracle
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+
+      - name: Build jar and sources jar
+        run: './gradlew "-Pfreemarker.signMethod=none" "-Pfreemarker.allowUnsignedReleaseBuild=true" clean jar sourcesJar'
+
+      - name: Compute release version
+        run: |
+          BASE_VERSION=$(grep '^mavenVersion=' freemarker-core/src/main/resource-templates/freemarker/version.properties | cut -d'=' -f2)
+          echo "BASE_VERSION=${BASE_VERSION}" >> "$GITHUB_ENV"
+          echo "PUBLISH_VERSION=${BASE_VERSION}-alfresco-patched" >> "$GITHUB_ENV"
+
+      # Writes ~/.m2/settings.xml with a <server> entry for NEXUS_SERVER_ID, pulling the
+      # actual credentials from env vars at runtime (set below from repo/org secrets).
+      - name: Set up Maven settings.xml for Nexus
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+          server-id: ${{ vars.NEXUS_SERVER_ID }}
+          server-username: NEXUS_USERNAME
+          server-password: NEXUS_PASSWORD
+
+      - name: Deploy jar + sources to Nexus
+        env:
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: |
+          mvn deploy:deploy-file \
+            -Durl="${{ vars.NEXUS_URL }}" \
+            -DrepositoryId="${{ vars.NEXUS_SERVER_ID }}" \
+            -Dfile="build/libs/freemarker-${BASE_VERSION}.jar" \
+            -DgroupId=org.freemarker \
+            -DartifactId=freemarker \
+            -Dversion="${PUBLISH_VERSION}" \
+            -Dtype=jar \
+            -DgeneratePom=true \
+            -DcreateChecksum=true \
+            -Dsources="build/libs/freemarker-${BASE_VERSION}-sources.jar" \
+            -DgeneratePom.description="Freemarker ${BASE_VERSION} Alfresco Patch"

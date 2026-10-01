@@ -42,18 +42,35 @@ jobs:
         run: |
           BASE_VERSION=$(grep '^mavenVersion=' freemarker-core/src/main/resource-templates/freemarker/version.properties | cut -d'=' -f2)
           sed -i "s/^mavenVersion=.*/mavenVersion=${BASE_VERSION}-alfresco-patched-2/" freemarker-core/src/main/resource-templates/freemarker/version.properties
+          PUBLISH_VERSION=$(grep '^mavenVersion=' freemarker-core/src/main/resource-templates/freemarker/version.properties | cut -d'=' -f2)
+          echo "PUBLISH_VERSION=${PUBLISH_VERSION}" >> "$GITHUB_ENV"
 
-      # Publishes via Gradle's own "main" MavenPublication (build.gradle.kts:337), which
-      # already carries the real upstream Apache FreeMarker POM metadata (license, url,
-      # scm, etc.) -- no need to hand-author a POM or shell out to Maven for this.
-      - name: Publish jar + sources + pom to Nexus
+      - name: Build jar, sources jar and pom
+        run: './gradlew "-Pfreemarker.signMethod=none" "-Pfreemarker.allowUnsignedReleaseBuild=true" clean jar sourcesJar generatePomFileForMainPublication'
+
+      # Gradle's HTTP client doesn't trust nexus.alfresco.com's certificate chain
+      # (PKIX path building failed), unlike Maven's deploy path which already works here --
+      # so the actual upload stays on Maven; we only borrow the POM Gradle generated above
+      # (build.gradle.kts:337's "main" publication -- the real upstream Apache FreeMarker
+      # license/url/scm metadata) instead of hand-authoring one.
+      - name: Set up Maven settings.xml for Nexus
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+          server-id: nexus-thirdparty
+          server-username: NEXUS_USERNAME
+          server-password: NEXUS_PASSWORD
+
+      - name: Deploy jar + sources to Nexus
         env:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
         run: |
-          ./gradlew "-Pfreemarker.signMethod=none" "-Pfreemarker.allowUnsignedReleaseBuild=true" \
-            "-PfreemarkerDeployUrl=https://nexus.alfresco.com/nexus/service/local/repositories/thirdparty" \
-            "-PfreemarkerDeployServerId=nexusThirdparty" \
-            "-Pfreemarker.deploy.apache.user=${NEXUS_USERNAME}" \
-            "-Pfreemarker.deploy.apache.password=${NEXUS_PASSWORD}" \
-            publishMainPublicationToNexusThirdpartyRepository
+          mvn org.apache.maven.plugins:maven-deploy-plugin:2.8.2:deploy-file \
+            -Durl="https://nexus.alfresco.com/nexus/service/local/repositories/thirdparty" \
+            -DrepositoryId="nexus-thirdparty" \
+            -Dfile="build/libs/freemarker-${PUBLISH_VERSION}.jar" \
+            -DpomFile="build/publications/main/pom-default.xml" \
+            -DcreateChecksum=true \
+            -Dsources="build/libs/freemarker-${PUBLISH_VERSION}-sources.jar"
